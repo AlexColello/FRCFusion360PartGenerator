@@ -1,10 +1,12 @@
 {
 	"autodeskProduct":	"Fusion360",
-	"type":	"script",
-	"author":	"Alex Colello",
+	"type":	"addin",
+	"author": "Alex Colello",
+	"version": "0.1.0",
 	"description":	{
 		"":	"Generates a variety of commonly used parts for the FIRST Robotics Competition."
 	},
+	"runOnStartup":	true,
 	"supportedOS":	"windows|mac",
 	"editEnabled":	true
 }
