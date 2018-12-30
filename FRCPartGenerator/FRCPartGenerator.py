@@ -1,14 +1,20 @@
 #Author-Alex Colello
 #Description-Generates a variety of commonly used parts for the FIRST Robotics Competition.
 
-import adsk.core, adsk.fusion, adsk.cam, traceback
+import adsk.core, adsk.fusion, adsk.cam, traceback, sys, os
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.append(dir_path)
+import ProfileSketches
+
+import importlib
+importlib.reload(ProfileSketches)
 
 _app = None
 _ui = None
 
 handlers = []
-profile = None
-profileName = ''
+
 
 class PartGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
     def __init__(self):
@@ -16,34 +22,27 @@ class PartGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
         
     def notify(self, args):
         try:
-            _ui.messageBox("Command Execute Handler")
             
-            eventArgs = adsk.core.CommandEventArgs.cast(args)
-
-            # Get the values from the command inputs.
-            inputs = eventArgs.command.commandInputs
-            distanceVal = inputs.itemById('distanceValue').value             
-            
-            product = _app.activeProduct
-            design = adsk.fusion.Design.cast(product)
-            if not design:
-                _ui.messageBox('It is not supported in current workspace, please change to MODEL workspace and try again.')
-                return
+            eventArgs = adsk.core.CommandEventArgs.cast(args)            
         
-            global newComp
             newComp = createNewComponent()
             if newComp is None:
                 _ui.messageBox('New component failed to create', 'New Component Failed')
                 return
                 
+            # Get the values from the command inputs.
+            inputs = eventArgs.command.commandInputs
+            distanceVal = inputs.itemById('distanceValue').value 
+            selectedProfile = inputs.itemById('profileDropdown').selectedItem.name
+
             # add sketch
             sketches = newComp.sketches
             sketch = sketches.add(newComp.xYConstructionPlane)                
             
-            circleProfile = drawCircle(sketch)            
-            
-            distance = adsk.core.ValueInput.createByReal(distanceVal)    
-            extrudeProfile(circleProfile, distance, newComp)
+            profile = ProfileSketches.sketchProfile(selectedProfile, sketch)            
+            distance = adsk.core.ValueInput.createByReal(distanceVal)  
+
+            extrudeProfile(profile, distance, newComp)
             
         except:
             if _ui:
@@ -56,33 +55,26 @@ class PartGeneratorCommandExecutePreviewHandler(adsk.core.CommandEventHandler):
     def notify(self, args):
 
         try:
-            _ui.messageBox('preview')
-            eventArgs = adsk.core.CommandEventArgs.cast(args)
-
-            # Get the values from the command inputs.
-            inputs = eventArgs.command.commandInputs
-            distanceVal = inputs.itemById('distanceValue').value             
-            
-            product = _app.activeProduct
-            design = adsk.fusion.Design.cast(product)
-            if not design:
-                _ui.messageBox('It is not supported in current workspace, please change to MODEL workspace and try again.')
-                return
+            eventArgs = adsk.core.CommandEventArgs.cast(args)            
         
-            global newComp
             newComp = createNewComponent()
             if newComp is None:
                 _ui.messageBox('New component failed to create', 'New Component Failed')
                 return
                 
+            # Get the values from the command inputs.
+            inputs = eventArgs.command.commandInputs
+            distanceVal = inputs.itemById('distanceValue').value 
+            selectedProfile = inputs.itemById('profileDropdown').selectedItem.name
+
             # add sketch
             sketches = newComp.sketches
             sketch = sketches.add(newComp.xYConstructionPlane)                
             
-            circleProfile = drawCircle(sketch)            
-            
-            distance = adsk.core.ValueInput.createByReal(distanceVal)    
-            extrudeProfile(circleProfile, distance, newComp)
+            profile = ProfileSketches.sketchProfile(selectedProfile, sketch)            
+            distance = adsk.core.ValueInput.createByReal(distanceVal)  
+
+            extrudeProfile(profile, distance, newComp)
             
             eventArgs.isValidResult = True            
             
@@ -98,23 +90,31 @@ class PartGeneratorCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
     def notify(self, args):
 
         try:
-            _ui.messageBox("Command Create Handler")
-            
-            
+
             eventArgs = adsk.core.CommandCreatedEventArgs.cast(args)
             
+            product = _app.activeProduct
+            design = adsk.fusion.Design.cast(product)
+            if not design:
+                _ui.messageBox('It is not supported in current workspace, please change to MODEL workspace and try again.')
+                return
+
+
             # Get the command
             cmd = eventArgs.command
         
             # Get the CommandInputs collection to create new command inputs.            
             inputs = cmd.commandInputs
             
-            dropdownInput = inputs.addDropDownCommandInput('dropdown', 'Dropdown', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
+            dropdownInput = inputs.addDropDownCommandInput('profileDropdown', 'Profile', adsk.core.DropDownStyles.LabeledIconDropDownStyle);
             dropdownItems = dropdownInput.listItems
-            dropdownItems.add('Item 1', True, '')
-            dropdownItems.add('Item 2', False, '')        
-            
-            distanceValueInput = inputs.addDistanceValueCommandInput('distanceValue', 'DistanceValue', adsk.core.ValueInput.createByReal(1))
+
+            profileList = ProfileSketches.getProfiles()
+            dropdownItems.add(profileList[0], True, '')
+            for i in range(1, len(profileList)):
+                dropdownItems.add(profileList[i], False, '')
+
+            distanceValueInput = inputs.addDistanceValueCommandInput('distanceValue', 'Length', adsk.core.ValueInput.createByReal(1))
             distanceValueInput.setManipulator(adsk.core.Point3D.create(0, 0, 0), adsk.core.Vector3D.create(0, 0, 1))
             distanceValueInput.expression = '1 in'
             distanceValueInput.hasMinimumValue = False
@@ -156,19 +156,6 @@ class PartGeneratorCommandValidateInputsHandler(adsk.core.ValidateInputsEventHan
             if _ui:
                 _ui.messageBox('Failed:\n{}'.format(traceback.format_exc()))
 
-def drawCircle(sketch):
-    
-    origin = adsk.core.Point3D.create(0, 0, 0)
-    
-    circles = sketch.sketchCurves.sketchCircles
-    circles.addByCenterRadius(origin, 13.75/2)
-    circleProfile = sketch.profiles.item(0)  
-    
-    global profile
-    profile = circleProfile
-    
-    return circleProfile
-
 
 def createNewComponent():
     
@@ -202,26 +189,26 @@ def run(context):
         _app = adsk.core.Application.get()
         _ui = _app.userInterface
 
-        existingDef = _ui.commandDefinitions.itemById('frcHexShaft')
+        existingDef = _ui.commandDefinitions.itemById('frcShaftGenerator')
         if existingDef:
             existingDef.deleteMe()
             
         # Delete the control
         addinPanel = _ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
-        hexControl = addinPanel.controls.itemById('frcHexShaft')
-        if hexControl:
-            hexControl.deleteMe()
+        shaftControl = addinPanel.controls.itemById('frcShaftGenerator')
+        if shaftControl:
+            shaftControl.deleteMe()
 
         seperator = addinPanel.controls.itemById('frcSeperator')
         if seperator:
             seperator.deleteMe()                
             
         # Create the command definition.
-        hexCmdDef = _ui.commandDefinitions.addButtonDefinition('frcHexShaft', 'Hex Shaft', 'Creates a hex shaft at a desired length.', './Resources/HexImages')
+        shaftCmdDef = _ui.commandDefinitions.addButtonDefinition('frcShaftGenerator', 'Shaft', 'Creates a variety of types of shafts at a desired length.', './Resources/ShaftImages')
 
         # Connect to the command created event.
         onCommandCreated = PartGeneratorCommandCreatedHandler()
-        hexCmdDef.commandCreated.add(onCommandCreated)
+        shaftCmdDef.commandCreated.add(onCommandCreated)
         handlers.append(onCommandCreated)                
 
         # Get the CREATE toolbar panel. 
@@ -231,7 +218,7 @@ def run(context):
         addinPanel.controls.addSeparator('frcSeperator', 'ExchangeAppStoreCommand', False)
         
         # Add the command below the Web command.
-        addinPanel.controls.addCommand(hexCmdDef, 'frcSeperator', False)
+        addinPanel.controls.addCommand(shaftCmdDef, 'frcSeperator', False)
         
     except:
         if _ui:
@@ -245,16 +232,16 @@ def stop(context):
     
         # Delete the control
         addinPanel = _ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
-        hexControl = addinPanel.controls.itemById('frcHexShaft')
-        if hexControl:
-            hexControl.deleteMe()
+        shaftControl = addinPanel.controls.itemById('frcShaftGenerator')
+        if shaftControl:
+            shaftControl.deleteMe()
 
         seperator = addinPanel.controls.itemById('frcSeperator')
         if seperator:
             seperator.deleteMe()
     
         # Delete the command definition.                
-        existingDef = _ui.commandDefinitions.itemById('frcHexShaft')
+        existingDef = _ui.commandDefinitions.itemById('frcShaftGenerator')
         if existingDef:
             existingDef.deleteMe()
     
