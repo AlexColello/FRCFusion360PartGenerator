@@ -35,7 +35,7 @@ def run(context):
 		shaftCmdDef = _ui.commandDefinitions.addButtonDefinition('frcShaftGenerator', 'Shaft', 'Creates a variety of types of shafts at a desired length.', './Resources/ShaftImages')
 
 		# Connect to the command created event.
-		onCommandCreated = ShaftGenerator.PartGeneratorCommandCreatedHandler()
+		onCommandCreated = ShaftGenerator.ShaftGeneratorCommandCreatedHandler()
 		shaftCmdDef.commandCreated.add(onCommandCreated)
 		ShaftGenerator.handlers.append(onCommandCreated)                
 
