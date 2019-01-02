@@ -1,35 +1,68 @@
 
+import adsk.core, adsk.fusion, adsk.cam, traceback
+import json
+
+
+def debugPrint(message):
+	ui = adsk.core.Application.get().userInterface
+	ui.messageBox(message)
+
+def decodeProfile(dct):
+
+	objtype = dct.get("objtype")
+	if objtype == "HoleProfile":
+		return HoleProfile(offset=dct["offset"], edgeDistance=dct["edgeDistance"], spacing=dct["spacing"], diameter=dct["diameter"])
+	if objtype == "GenericFrameProfile":
+		retval = FrameObject(width=dct["width"], height=dct["height"], wallThickness=dct["wallThickness"])
+		retval.verticleHoles.extend(dct["verticleHoles"])
+		retval.horizontalHoles.extend(dct["horizontalHoles"])
+		return retval
+	if objtype == "BoxTubeFrameProfile":
+		retval = BoxTubing(width=dct["width"], height=dct["height"], wallThickness=dct["wallThickness"])
+		retval.verticleHoles.extend(dct["verticleHoles"])
+		retval.horizontalHoles.extend(dct["horizontalHoles"])
+		return retval
+	return dct
+
 
 class HoleProfile():
 
-	offset = 0
-	edgeDistance = 0
-	spacing = 0
-	diameter = 0
+	def __init__(self, offset=0, edgeDistance=0, spacing=0, diameter=0):
+		self.objtype = "HoleProfile"
+		self.offset = offset
+		self.edgeDistance = edgeDistance
+		self.spacing = spacing
+		self.diameter = diameter
 
 
 class FrameObject():
 
-	width = 0
-	height = 0
-	wallThickness = 0
-
-	def __init__(self):
+	def __init__(self, width=0, height=0, wallThickness=0):
+		self.objtype = "GenericFrameProfile"
 		self.verticleHoles = []
 		self.horizontalHoles = []
+		self.width = width
+		self.height = height
+		self.wallThickness = wallThickness
+
+	def saveProfile(self, filename):
+		jsonString = json.dumps(self, sort_keys=True, indent=4, separators=(',', ': '), default=lambda o: o.__dict__)
+
+		output = open(filename, 'w')
+		output.writelines(jsonString)
+		output.close()
 
 
-class RectangularTubing(FrameObject):
+class BoxTubing(FrameObject):
 
-	def __init__(self):
-		super().__init__()
+	def __init__(self, width=0, height=0, wallThickness=0):
+		super().__init__(width, height, wallThickness)
+		self.objtype = "BoxTubeFrameProfile"
 
 	def drawSketch(self, sketch):
 
 		origin = adsk.core.Point3D.create(0, 0, 0)
-		
-		size = self.size / math.sqrt(3) * 2
-		
+				
 		innerVertices = []
 		outerVertices = []
 		for i in range(0, 4):
@@ -46,6 +79,7 @@ class RectangularTubing(FrameObject):
 		for i in range(0, 4):
 			sketch.sketchCurves.sketchLines.addByTwoPoints(outerVertices[(i+1) % 4], outerVertices[i])
 			sketch.sketchCurves.sketchLines.addByTwoPoints(innerVertices[(i+1) % 4], innerVertices[i])
-		
-		profile = sketch.profiles[0]
+
+		profile = max(sketch.profiles, key=lambda prof : prof.boundingBox.maxPoint.x - prof.boundingBox.minPoint.x)
+
 		return profile

@@ -6,9 +6,38 @@ import adsk.core, adsk.fusion, adsk.cam, traceback, sys, os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
 import ShaftGenerator
+import FrameGenerator
 
 import importlib
 importlib.reload(ShaftGenerator)
+importlib.reload(FrameGenerator)
+
+
+def deletePrevious():
+	_app = adsk.core.Application.get()
+	_ui = _app.userInterface
+
+	existingDef = _ui.commandDefinitions.itemById('frcShaftGenerator')
+	if existingDef:
+		existingDef.deleteMe()
+
+	existingDef = _ui.commandDefinitions.itemById('frcBoxTubeGenerator')
+	if existingDef:
+		existingDef.deleteMe()
+
+	# Delete the control
+	createPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')	
+	shaftControl = createPanel.controls.itemById('frcShaftGenerator')
+	if shaftControl:
+		shaftControl.deleteMe()
+	
+	seperator = createPanel.controls.itemById('frcBoxTubeGenerator')
+	if seperator:
+		seperator.deleteMe()
+
+	seperator = createPanel.controls.itemById('frcSeperator')
+	if seperator:
+		seperator.deleteMe()
 
 
 def run(context):
@@ -17,20 +46,14 @@ def run(context):
 		_app = adsk.core.Application.get()
 		_ui = _app.userInterface
 
-		existingDef = _ui.commandDefinitions.itemById('frcShaftGenerator')
-		if existingDef:
-			existingDef.deleteMe()
+		deletePrevious()              
 			
-		# Delete the control
-		addinPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
-		shaftControl = addinPanel.controls.itemById('frcShaftGenerator')
-		if shaftControl:
-			shaftControl.deleteMe()
+		# Get the CREATE toolbar panel. 
+		createPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
+				
+		# Add a seperator first
+		createPanel.controls.addSeparator('frcSeperator', 'PrimitivePipe', False)
 
-		seperator = addinPanel.controls.itemById('frcSeperator')
-		if seperator:
-			seperator.deleteMe()                
-			
 		# Create the command definition.
 		shaftCmdDef = _ui.commandDefinitions.addButtonDefinition('frcShaftGenerator', 'Shaft', 'Creates a variety of types of shafts at a desired length.', './Resources/ShaftImages')
 
@@ -39,14 +62,19 @@ def run(context):
 		shaftCmdDef.commandCreated.add(onCommandCreated)
 		ShaftGenerator.handlers.append(onCommandCreated)                
 
-		# Get the CREATE toolbar panel. 
-		addinPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
-				
-		# Add a seperator first
-		addinPanel.controls.addSeparator('frcSeperator', 'PrimitivePipe', False)
-		
-		# Add the command below the Web command.
-		addinPanel.controls.addCommand(shaftCmdDef, 'frcSeperator', False)
+		# Add the command below the Pipe command.
+		createPanel.controls.addCommand(shaftCmdDef, 'frcSeperator', False)
+
+		# Create the command definition.
+		boxCmdDef = _ui.commandDefinitions.addButtonDefinition('frcBoxTubeGenerator', 'Box Tube', 'Creates a box tube of a desired length.', './Resources/MainImages')
+
+		# Connect to the command created event.
+		onCommandCreated = FrameGenerator.FrameGeneratorCommandCreatedHandler()
+		boxCmdDef.commandCreated.add(onCommandCreated)
+		FrameGenerator.handlers.append(onCommandCreated)                
+
+		# Add the command below the Pipe command.
+		createPanel.controls.addCommand(boxCmdDef, 'frcSeperator', False)
 		
 	except:
 		if _ui:
@@ -55,23 +83,7 @@ def run(context):
 def stop(context):
 
 	try:
-		_app = adsk.core.Application.get()
-		_ui  = _app.userInterface
-	
-		# Delete the control
-		addinPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
-		shaftControl = addinPanel.controls.itemById('frcShaftGenerator')
-		if shaftControl:
-			shaftControl.deleteMe()
-
-		seperator = addinPanel.controls.itemById('frcSeperator')
-		if seperator:
-			seperator.deleteMe()
-	
-		# Delete the command definition.                
-		existingDef = _ui.commandDefinitions.itemById('frcShaftGenerator')
-		if existingDef:
-			existingDef.deleteMe()
+		deletePrevious()
 	
 	except:
 		if _ui:

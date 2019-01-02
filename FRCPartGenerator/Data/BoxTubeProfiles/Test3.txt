@@ -1,0 +1,8 @@
+{
+    "height": 2,
+    "horizontalHoles": [],
+    "objtype": "BoxTubeFrameProfile",
+    "verticleHoles": [],
+    "wallThickness": 0.125,
+    "width": 1
+}
