@@ -22,7 +22,7 @@ def run(context):
 			existingDef.deleteMe()
 			
 		# Delete the control
-		addinPanel = _ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
+		addinPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
 		shaftControl = addinPanel.controls.itemById('frcShaftGenerator')
 		if shaftControl:
 			shaftControl.deleteMe()
@@ -40,10 +40,10 @@ def run(context):
 		ShaftGenerator.handlers.append(onCommandCreated)                
 
 		# Get the CREATE toolbar panel. 
-		addinPanel = _ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
+		addinPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
 				
 		# Add a seperator first
-		addinPanel.controls.addSeparator('frcSeperator', 'ExchangeAppStoreCommand', False)
+		addinPanel.controls.addSeparator('frcSeperator', 'PrimitivePipe', False)
 		
 		# Add the command below the Web command.
 		addinPanel.controls.addCommand(shaftCmdDef, 'frcSeperator', False)
@@ -59,7 +59,7 @@ def stop(context):
 		_ui  = _app.userInterface
 	
 		# Delete the control
-		addinPanel = _ui.allToolbarPanels.itemById('SolidScriptsAddinsPanel')
+		addinPanel = _ui.allToolbarPanels.itemById('SolidCreatePanel')
 		shaftControl = addinPanel.controls.itemById('frcShaftGenerator')
 		if shaftControl:
 			shaftControl.deleteMe()
