@@ -1,6 +1,6 @@
 
 import adsk.core, adsk.fusion, adsk.cam, traceback
-import json
+import json, os
 
 
 def debugPrint(message):
@@ -16,11 +16,13 @@ def decodeProfile(dct):
 		retval = FrameObject(width=dct["width"], height=dct["height"], wallThickness=dct["wallThickness"])
 		retval.verticleHoles.extend(dct["verticleHoles"])
 		retval.horizontalHoles.extend(dct["horizontalHoles"])
+		retval.setId(dct["id"])
 		return retval
 	if objtype == "BoxTubeFrameProfile":
 		retval = BoxTubing(width=dct["width"], height=dct["height"], wallThickness=dct["wallThickness"])
 		retval.verticleHoles.extend(dct["verticleHoles"])
 		retval.horizontalHoles.extend(dct["horizontalHoles"])
+		retval.setId(dct["id"])
 		return retval
 	return dct
 
@@ -44,13 +46,17 @@ class FrameObject():
 		self.width = width
 		self.height = height
 		self.wallThickness = wallThickness
+		self.id = ""
 
-	def saveProfile(self, filename):
+	def saveProfile(self, directory):
 		jsonString = json.dumps(self, sort_keys=True, indent=4, separators=(',', ': '), default=lambda o: o.__dict__)
 
-		output = open(filename, 'w')
+		output = open(os.path.join(directory, self.id + '.json'), 'w')
 		output.writelines(jsonString)
 		output.close()
+
+	def setId(self, newId):
+		self.id = newId
 
 
 class BoxTubing(FrameObject):
