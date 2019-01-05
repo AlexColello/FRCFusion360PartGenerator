@@ -15,6 +15,7 @@ handlers = []
 profileFiles = None
 allProfiles = None
 
+
 def loadProfiles(profileDirectory):
 
 	profiles = {}	
@@ -110,6 +111,7 @@ class FrameGeneratorCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
 			allProfiles = {}
 
 			includedDirectory = os.path.join(dir_path, 'Data', 'BoxTubeProfiles', 'Included')
+			FrameProfiles.saveVersaframeProfiles(includedDirectory)
 			includedProfiles = loadProfiles(includedDirectory)
 			includedProfileValues = list(includedProfiles.values())
 

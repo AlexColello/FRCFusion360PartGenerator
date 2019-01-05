@@ -1,0 +1,17 @@
+{
+    "height": 2.54,
+    "horizontalHoles": [
+        {
+            "diameter": 0.41402,
+            "edgeDistance": 1.27,
+            "objtype": "HoleProfile",
+            "offset": 1.27,
+            "spacing": 2.54
+        }
+    ],
+    "id": "1 x 1 x 0.100 VersaFrame",
+    "objtype": "BoxTubeFrameProfile",
+    "verticalHoles": [],
+    "wallThickness": 0.254,
+    "width": 2.54
+}

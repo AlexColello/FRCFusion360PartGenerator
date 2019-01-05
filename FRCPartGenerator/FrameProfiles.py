@@ -14,13 +14,13 @@ def decodeProfile(dct):
 		return HoleProfile(offset=dct["offset"], edgeDistance=dct["edgeDistance"], spacing=dct["spacing"], diameter=dct["diameter"])
 	if objtype == "GenericFrameProfile":
 		retval = FrameObject(width=dct["width"], height=dct["height"], wallThickness=dct["wallThickness"])
-		retval.verticleHoles.extend(dct["verticleHoles"])
+		retval.verticalHoles.extend(dct["verticalHoles"])
 		retval.horizontalHoles.extend(dct["horizontalHoles"])
 		retval.setId(dct["id"])
 		return retval
 	if objtype == "BoxTubeFrameProfile":
 		retval = BoxTubing(width=dct["width"], height=dct["height"], wallThickness=dct["wallThickness"])
-		retval.verticleHoles.extend(dct["verticleHoles"])
+		retval.verticalHoles.extend(dct["verticalHoles"])
 		retval.horizontalHoles.extend(dct["horizontalHoles"])
 		retval.setId(dct["id"])
 		return retval
@@ -41,7 +41,7 @@ class FrameObject():
 
 	def __init__(self, width=0, height=0, wallThickness=0):
 		self.objtype = "GenericFrameProfile"
-		self.verticleHoles = []
+		self.verticalHoles = []
 		self.horizontalHoles = []
 		self.width = width
 		self.height = height
@@ -89,3 +89,32 @@ class BoxTubing(FrameObject):
 		profile = max(sketch.profiles, key=lambda prof : prof.boundingBox.maxPoint.x - prof.boundingBox.minPoint.x)
 
 		return profile
+
+
+def saveVersaframeProfiles(directory):
+
+	profiles = []
+
+	profile = BoxTubing(1*2.54, 2*2.54, 0.1*2.54)
+	profile.verticalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
+	profile.id = '1 x 2 x 0.100 VersaFrame'
+	profiles.append(profile)
+
+	profile = BoxTubing(1*2.54, 2*2.54, 0.05*2.54)
+	profile.verticalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
+	profile.id = '1 x 2 x 0.050 VersaFrame'
+	profiles.append(profile)
+
+	profile = BoxTubing(1*2.54, 1*2.54, 0.1*2.54)
+	profile.horizontalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
+	profile.id = '1 x 1 x 0.100 VersaFrame'
+	profiles.append(profile)
+
+	profile = BoxTubing(1*2.54, 1*2.54, 0.04*2.54)
+	profile.horizontalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
+	profile.verticalHoles.append(HoleProfile(0, 0.5*2.54, 1*2.54, 0.163*2.54))
+	profile.id = '1 x 1 x 0.040 VersaFrame'
+	profiles.append(profile)
+
+	for prof in profiles:
+		prof.saveProfile(directory)
