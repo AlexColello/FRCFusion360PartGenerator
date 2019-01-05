@@ -57,29 +57,88 @@ class FrameGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
 			inputs = eventArgs.command.commandInputs
 			distanceVal = inputs.itemById('distanceValue').value 
 
-			# add sketch
+			# Sketch the profile
 			sketches = newComp.sketches
-			sketch = sketches.add(newComp.xYConstructionPlane)
+			profileSketch = sketches.add(newComp.xYConstructionPlane)
 			
 			table = inputs.itemById('profileTable')
-			if table.rowCount > 0:
-				selectedCommand = table.getInputAtPosition(table.selectedRow, 0)
-				selectedProfileID = selectedCommand.name
-				selectedProfile = allProfiles[selectedProfileID]
-				profile = selectedProfile.drawSketch(sketch)
-				distance = adsk.core.ValueInput.createByReal(distanceVal)  
+			if table.rowCount <= 0:
+				return
 
-				# extrude the profile
-				extrudes = newComp.features.extrudeFeatures
+			selectedCommand = table.getInputAtPosition(table.selectedRow, 0)
+			selectedProfileID = selectedCommand.name
+			selectedProfile = allProfiles[selectedProfileID]
+			profile = selectedProfile.drawSketch(profileSketch)
+			distance = adsk.core.ValueInput.createByReal(distanceVal)  
+
+			# Extrude the profile
+			extrudes = newComp.features.extrudeFeatures
+	
+			frameExtrudeInput = extrudes.createInput(profile, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+			frameExtrudeDistance = adsk.fusion.DistanceExtentDefinition.create(distance)        
+			frameExtrudeInput.setOneSideExtent(frameExtrudeDistance, adsk.fusion.ExtentDirections.PositiveExtentDirection)
 		
-				extrudeInput = extrudes.createInput(profile, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-				extentDistance = adsk.fusion.DistanceExtentDefinition.create(distance)        
-				extrudeInput.setOneSideExtent(extentDistance, adsk.fusion.ExtentDirections.PositiveExtentDirection)
-			
-				extrudeFeature = extrudes.add(extrudeInput)
-							
-				eventArgs.isValidResult = True
-				_app.activeViewport.refresh()
+			frameExtrudeFeature = extrudes.add(frameExtrudeInput)
+			frameBody = frameExtrudeFeature.bodies[0]
+
+			# Sketch holes
+			direction = -distanceVal / abs(distanceVal)
+
+			if len(selectedProfile.verticalHoles) > 0:
+				verticalHoleSketch = sketches.add(newComp.xZConstructionPlane)
+				verticalCircles = verticalHoleSketch.sketchCurves.sketchCircles
+				for holePattern in selectedProfile.verticalHoles:
+					
+					zPosition = holePattern.offset * direction
+					xPosition = -selectedProfile.width/2.0 + holePattern.edgeDistance
+
+					while abs(zPosition) < abs(distanceVal) + holePattern.diameter/2.0:
+						point = adsk.core.Point3D.create(xPosition, zPosition, 0)
+						newCircle = verticalCircles.addByCenterRadius(point, holePattern.diameter/2.0)
+
+						zPosition += direction * holePattern.spacing
+
+			if len(selectedProfile.horizontalHoles) > 0:
+				horizontalHoleSketch = sketches.add(newComp.yZConstructionPlane)
+				horizontalCircles = horizontalHoleSketch.sketchCurves.sketchCircles
+				for holePattern in selectedProfile.horizontalHoles:
+					
+					zPosition = holePattern.offset * direction
+					yPosition = selectedProfile.height/2.0 - holePattern.edgeDistance
+
+					while abs(zPosition) < abs(distanceVal) + holePattern.diameter/2.0:
+						point = adsk.core.Point3D.create(zPosition, yPosition, 0)
+						horizontalCircles.addByCenterRadius(point, holePattern.diameter/2.0)
+
+						zPosition += direction * holePattern.spacing
+
+			# Extrude holes
+			extentAll = adsk.fusion.ThroughAllExtentDefinition.create()
+
+			if len(selectedProfile.verticalHoles) > 0 and verticalHoleSketch.profiles.count > 0:
+				verticalProfiles = adsk.core.ObjectCollection.create()
+				for prof in verticalHoleSketch.profiles:
+					verticalProfiles.add(prof)
+
+				verticalExtrudeInput = extrudes.createInput(verticalProfiles, adsk.fusion.FeatureOperations.CutFeatureOperation)
+				verticalExtrudeExtent = adsk.core.ValueInput.createByReal(selectedProfile.height)
+				verticalExtrudeInput.setSymmetricExtent(verticalExtrudeExtent, True)
+				verticalExtrudeInput.participantBodies = [frameBody]
+				verticalExtrudeFeature = extrudes.add(verticalExtrudeInput)
+
+			if len(selectedProfile.horizontalHoles) > 0 and horizontalHoleSketch.profiles.count > 0:
+				horizontalProfiles = adsk.core.ObjectCollection.create()
+				for prof in horizontalHoleSketch.profiles:
+					horizontalProfiles.add(prof)
+
+				horizontalExtrudeInput = extrudes.createInput(horizontalProfiles, adsk.fusion.FeatureOperations.CutFeatureOperation)
+				horizontalExtrudeExtent = adsk.core.ValueInput.createByReal(selectedProfile.width)
+				horizontalExtrudeInput.setSymmetricExtent(horizontalExtrudeExtent, True)
+				horizontalExtrudeInput.participantBodies = [frameBody]
+				horizontalExtrudeFeature = extrudes.add(horizontalExtrudeInput)
+
+			eventArgs.isValidResult = True
+			_app.activeViewport.refresh()
 
 		except:
 			if _ui:
@@ -111,7 +170,6 @@ class FrameGeneratorCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
 			allProfiles = {}
 
 			includedDirectory = os.path.join(dir_path, 'Data', 'BoxTubeProfiles', 'Included')
-			FrameProfiles.saveVersaframeProfiles(includedDirectory)
 			includedProfiles = loadProfiles(includedDirectory)
 			includedProfileValues = list(includedProfiles.values())
 

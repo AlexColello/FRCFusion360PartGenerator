@@ -55,8 +55,8 @@ class FrameObject():
 		output.writelines(jsonString)
 		output.close()
 
-	def setId(self, newId):
-		self.id = newId
+	def setId(self, val):
+		self.id = val
 
 
 class BoxTubing(FrameObject):
@@ -97,23 +97,23 @@ def saveVersaframeProfiles(directory):
 
 	profile = BoxTubing(1*2.54, 2*2.54, 0.1*2.54)
 	profile.verticalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
-	profile.id = '1 x 2 x 0.100 VersaFrame'
+	profile.setId('1 x 2 x 0.100 VersaFrame')
 	profiles.append(profile)
 
 	profile = BoxTubing(1*2.54, 2*2.54, 0.05*2.54)
 	profile.verticalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
-	profile.id = '1 x 2 x 0.050 VersaFrame'
+	profile.setId('1 x 2 x 0.050 VersaFrame')
 	profiles.append(profile)
 
 	profile = BoxTubing(1*2.54, 1*2.54, 0.1*2.54)
 	profile.horizontalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
-	profile.id = '1 x 1 x 0.100 VersaFrame'
+	profile.setId('1 x 1 x 0.100 VersaFrame')
 	profiles.append(profile)
 
 	profile = BoxTubing(1*2.54, 1*2.54, 0.04*2.54)
 	profile.horizontalHoles.append(HoleProfile(0.5*2.54, 0.5*2.54, 1*2.54, 0.163*2.54))
 	profile.verticalHoles.append(HoleProfile(0, 0.5*2.54, 1*2.54, 0.163*2.54))
-	profile.id = '1 x 1 x 0.040 VersaFrame'
+	profile.setId('1 x 1 x 0.040 VersaFrame')
 	profiles.append(profile)
 
 	for prof in profiles:

@@ -44,8 +44,8 @@ class ShaftGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
 			extrudes = newComp.features.extrudeFeatures
 	
 			extrudeInput = extrudes.createInput(profile, adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
-			extentDistance = adsk.fusion.DistanceExtentDefinition.create(distance)        
-			extrudeInput.setOneSideExtent(extentDistance, adsk.fusion.ExtentDirections.PositiveExtentDirection)
+			extrudeDistance = adsk.fusion.DistanceExtentDefinition.create(distance)        
+			extrudeInput.setOneSideExtent(extrudeDistance, adsk.fusion.ExtentDirections.PositiveExtentDirection)
 		
 			extrudeFeature = extrudes.add(extrudeInput)
 			
