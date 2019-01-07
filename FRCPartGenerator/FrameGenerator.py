@@ -94,8 +94,9 @@ class FrameGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
 					xPosition = -selectedProfile.width/2.0 + holePattern.edgeDistance
 
 					while abs(zPosition) < abs(distanceVal) + holePattern.diameter/2.0:
-						point = adsk.core.Point3D.create(xPosition, zPosition, 0)
-						newCircle = verticalCircles.addByCenterRadius(point, holePattern.diameter/2.0)
+						if (zPosition + direction * holePattern.diameter/2.0) * direction >= 0:
+							point = adsk.core.Point3D.create(xPosition, zPosition, 0)
+							newCircle = verticalCircles.addByCenterRadius(point, holePattern.diameter/2.0)
 
 						zPosition += direction * holePattern.spacing
 
@@ -108,8 +109,9 @@ class FrameGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
 					yPosition = selectedProfile.height/2.0 - holePattern.edgeDistance
 
 					while abs(zPosition) < abs(distanceVal) + holePattern.diameter/2.0:
-						point = adsk.core.Point3D.create(zPosition, yPosition, 0)
-						horizontalCircles.addByCenterRadius(point, holePattern.diameter/2.0)
+						if (zPosition + direction * holePattern.diameter/2.0) * direction >= 0:
+							point = adsk.core.Point3D.create(zPosition, yPosition, 0)
+							horizontalCircles.addByCenterRadius(point, holePattern.diameter/2.0)
 
 						zPosition += direction * holePattern.spacing
 
@@ -291,7 +293,7 @@ class FrameGeneratorCommandValidateInputsHandler(adsk.core.ValidateInputsEventHa
 			
 			distance = inputs.itemById('distanceValue').value
 			offset = inputs.itemById('offsetValue').value
-			if distance == 0 or offset < 0:
+			if distance == 0:
 				eventArgs.areInputsValid = False
 			else:
 				eventArgs.areInputsValid = True
