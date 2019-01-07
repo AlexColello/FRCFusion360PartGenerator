@@ -83,13 +83,14 @@ class FrameGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
 
 			# Sketch holes
 			direction = -distanceVal / abs(distanceVal)
+			offsetVal = inputs.itemById('offsetValue').value
 
 			if len(selectedProfile.verticalHoles) > 0:
 				verticalHoleSketch = sketches.add(newComp.xZConstructionPlane)
 				verticalCircles = verticalHoleSketch.sketchCurves.sketchCircles
 				for holePattern in selectedProfile.verticalHoles:
 					
-					zPosition = holePattern.offset * direction
+					zPosition = (holePattern.offset - holePattern.spacing + (offsetVal % holePattern.spacing)) * direction 
 					xPosition = -selectedProfile.width/2.0 + holePattern.edgeDistance
 
 					while abs(zPosition) < abs(distanceVal) + holePattern.diameter/2.0:
@@ -103,7 +104,7 @@ class FrameGeneratorCommandExecuteHandler(adsk.core.CommandEventHandler):
 				horizontalCircles = horizontalHoleSketch.sketchCurves.sketchCircles
 				for holePattern in selectedProfile.horizontalHoles:
 					
-					zPosition = holePattern.offset * direction
+					zPosition = (holePattern.offset - holePattern.spacing + (offsetVal % holePattern.spacing)) * direction
 					yPosition = selectedProfile.height/2.0 - holePattern.edgeDistance
 
 					while abs(zPosition) < abs(distanceVal) + holePattern.diameter/2.0:
@@ -232,7 +233,10 @@ class FrameGeneratorCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
 			distanceValueInput.setManipulator(adsk.core.Point3D.create(0, 0, 0), adsk.core.Vector3D.create(0, 0, 1))
 			distanceValueInput.expression = '1 in'
 			distanceValueInput.hasMinimumValue = False
-			distanceValueInput.hasMaximumValue = False		
+			distanceValueInput.hasMaximumValue = False
+
+			# Add offset input
+			offsetValueInput = inputs.addValueInput('offsetValue', 'Hole Offset', 'in', adsk.core.ValueInput.createByReal(0))	
 			
 			# Connect to the execute event.
 			onExecute = FrameGeneratorCommandExecuteHandler()
@@ -248,6 +252,7 @@ class FrameGeneratorCommandCreatedHandler(adsk.core.CommandCreatedEventHandler):
 			cmd.validateInputs.add(onValidateInputs)
 			handlers.append(onValidateInputs)
 
+			# Connect to the input changed event.
 			onInputChanged = FrameGeneratorCommandInputChangedHandler()
 			cmd.inputChanged.add(onInputChanged)
 			handlers.append(onInputChanged)
@@ -285,7 +290,8 @@ class FrameGeneratorCommandValidateInputsHandler(adsk.core.ValidateInputsEventHa
 			inputs = eventArgs.firingEvent.sender.commandInputs
 			
 			distance = inputs.itemById('distanceValue').value
-			if distance == 0:
+			offset = inputs.itemById('offsetValue').value
+			if distance == 0 or offset < 0:
 				eventArgs.areInputsValid = False
 			else:
 				eventArgs.areInputsValid = True
