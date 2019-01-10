@@ -19,7 +19,11 @@ allProfiles = None
 def loadProfiles(profileDirectory):
 
 	profiles = {}	
-	files = os.listdir(profileDirectory)
+	try:
+		files = os.listdir(profileDirectory)
+	except:
+		_ui.messageBox('Failed to load directory {}'.format(profileDirectory))
+		return profiles
 
 	for filename in filter(lambda x: len(x) > 5 and x.endswith('.json'), files):
 		filepath = os.path.join(profileDirectory, filename)

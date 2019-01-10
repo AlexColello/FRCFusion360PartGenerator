@@ -1,0 +1,45 @@
+Creating a custom profile:
+
+1. Start by creating a file with the name of the profile you would like and the extension .json, for example "Test 1.json".
+2. Copy the following into that file:
+
+{
+    "height": 0,
+    "horizontalHoles": [
+    ],
+    "id": "",
+    "objtype": "BoxTubeFrameProfile",
+    "verticalHoles": [
+    ],
+    "wallThickness": 0,
+    "width": 0
+}
+
+3. Replace the values in the new file with those of your profile. The attributes that should be changed are as follows:
+
+	height: The overall height of the tube profile in cm.
+	width: The overall width of the tube profile in cm.
+	wallThickness: The width of the wall in cm.
+	id: The name of your profile. It must be surrounded by " characters.
+
+4. Next add hole profiles to the verticalHoles and horizontalHoles list. To do this copy the following into whichever list 
+is appropriate. The horizontalHoles will will cut accross the profile, into the faces of that are 'height' wide, while the 
+verticalHoles will will cut through the profile verticaly, into the faces of that are 'width' wide.
+
+        {
+            "diameter": 0,
+            "edgeDistance": 0,
+            "objtype": "HoleProfile",
+            "offset": 0,
+            "spacing": 0
+        },
+
+5. Modify the values of the hole profiles to what they need to be. The attributes that should be changed are as follows:
+
+	diameter: The diameter of the holes in cm.
+	edgeDistance: The distance from the top left corner of the hole profile in cm.
+	offset: The offset from the start of the extrude in cm. If 0, the center point of the first hole is on the outside 
+		edge of the profile.
+	spacing: The distance between each of the centers of the holes in the pattern in cm.
+
+6. Save the file. The next time the 'Box Tube' command is selected the new profile should show up on the list of possible profiles.
